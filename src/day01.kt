@@ -6,6 +6,7 @@
  */
 
 import java.io.File
+import java.util.*
 import kotlin.io.*
 
 open class EnumCompanion<T, V>(private val valueMap: Map<T, V>) {
@@ -74,13 +75,42 @@ fun main(args: Array<String>) {
         var turn = Rotation.valueOf(step.substring(0..0))
         var dist: Int = step.substring(1).toInt()
         person.turnAndMove(turn, dist)
-        println(step)
-        println(person)
     }
 
     println(person)
 
     var distance = person.location.distanceFrom(Location())
     println("Person traveled ${distance} blocks")
+
+
+    /* Part B */
+    person.location.x = 0
+    person.location.y = 0
+    var locations: HashSet<Location> = HashSet()
+    locations.add(person.location.copy())
+    var lastLocation = person.location.copy()
+    var done = false
+    for (step in data) {
+        var turn = Rotation.valueOf(step.substring(0..0))
+        var dist: Int = step.substring(1).toInt()
+
+        person.turn(turn)
+        for (i in 1..dist) {
+            person.move(1)
+            if (locations.contains(person.location)) {
+                done = true
+                break
+            } else {
+                locations.add(person.location.copy())
+            }
+        }
+        if (done) break
+
+    }
+
+    println(person)
+    distance = person.location.distanceFrom(Location())
+    println("Person traveled ${distance} blocks, stopped when I hit the same place twice")
+
 
 }
