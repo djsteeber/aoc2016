@@ -50,6 +50,8 @@ What is the first time you can press the button to get a capsule?
 class Disc(val num: Int, val slotNum: Int, val initialPosition: Int, val next: Disc? = null) {
 
     fun receive(time: Int): Boolean {
+        // note add a second to the equation below because a second ticks from the time
+        // the caller calls receive to the time the receive is processed.
         val slot = (initialPosition + time + 1) % slotNum
 
         if (slot != 0) return false
@@ -69,7 +71,7 @@ fun main(args: Array<String>) {
     var passThru = false
     var time = 0
     while (! passThru) {
-        passThru = disks.receive(time+1)
+        passThru = disks.receive(time)
         if (! passThru) {
             time++
         }
@@ -77,12 +79,27 @@ fun main(args: Array<String>) {
 
     println("press button at time ${time}")
 
- /*
-    Disc #1 has 7 positions; at time=0, it is at position 0.
-    Disc #2 has 13 positions; at time=0, it is at position 0.
-    Disc #3 has 3 positions; at time=0, it is at position 2.
-    Disc #4 has 5 positions; at time=0, it is at position 2.
-    Disc #5 has 17 positions; at time=0, it is at position 0.
-    Disc #6 has 19 positio ns; at time=0, it is at position 7.
-    */
+    val disks2 = Disc(1,7,0,Disc(2,13,0,Disc(3,3,2,Disc(4,5,2,Disc(5,17,0,Disc(6,19,7, Disc(7,11,0)))))))
+    passThru = false
+    time = 0
+    while (! passThru) {
+        passThru = disks2.receive(time)
+        if (! passThru) {
+            time++
+        }
+    }
+
+    println("press button again at time ${time}")
+
+
+
+
+    /*
+       Disc #1 has 7 positions; at time=0, it is at position 0.
+       Disc #2 has 13 positions; at time=0, it is at position 0.
+       Disc #3 has 3 positions; at time=0, it is at position 2.
+       Disc #4 has 5 positions; at time=0, it is at position 2.
+       Disc #5 has 17 positions; at time=0, it is at position 0.
+       Disc #6 has 19 positio ns; at time=0, it is at position 7.
+       */
 }
