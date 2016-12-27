@@ -1,3 +1,6 @@
+package day12
+
+import com.sun.org.apache.bcel.internal.generic.StackInstruction
 import java.io.File
 import java.util.*
 
@@ -43,45 +46,57 @@ class Registers {
 }
 
 
-
-
-fun main(args: Array<String>) {
-    val instructionSet: List<String> = File(".\\resources\\day12.data").readLines()
+class BAInterpreter(val program: List<String>) {
     val registers =  Registers()
-    var instructionSetPointer = 0
-    registers.put("c", 1)
 
-    while (instructionSetPointer < instructionSet.size) {
-        val instruction = instructionSet[instructionSetPointer]
+    private val instructionSet: MutableList<String> = mutableListOf()
+    init {
+        instructionSet.addAll(program)
+    }
 
-        val parts = instruction.split(' ').map{ it.trim() }
-        val fn = parts[0]
-        val args = parts.slice(1..parts.size-1)
-        //println("{${instruction}} instructionSetPointer ${instructionSetPointer}")
-        when (fn) {
-            "cpy" -> {
-                registers.put(args[1], args[0])
-                instructionSetPointer++
-            }
-            "inc" -> {
-                registers.put(args[0], registers.get(args[0]) + 1)
-                instructionSetPointer++
-            }
-            "dec" -> {
-                registers.put(args[0], registers.get(args[0]) - 1)
-                instructionSetPointer++
-            }
-            "jnz" -> {
-                if (registers.get(args[0]) == 0) {
+    fun exec() {
+        var instructionSetPointer = 0
+        while (instructionSetPointer < instructionSet.size) {
+            val instruction = instructionSet[instructionSetPointer]
+
+            val parts = instruction.split(' ').map{ it.trim() }
+            val fn = parts[0]
+            val args = parts.slice(1..parts.size-1)
+            //println("{${instruction}} instructionSetPointer ${instructionSetPointer}")
+            when (fn) {
+                "cpy" -> {
+                    registers.put(args[1], args[0])
                     instructionSetPointer++
-                } else {
-                    instructionSetPointer += args[1].toInt()
+                }
+                "inc" -> {
+                    registers.put(args[0], registers.get(args[0]) + 1)
+                    instructionSetPointer++
+                }
+                "dec" -> {
+                    registers.put(args[0], registers.get(args[0]) - 1)
+                    instructionSetPointer++
+                }
+                "jnz" -> {
+                    if (registers.get(args[0]) == 0) {
+                        instructionSetPointer++
+                    } else {
+                        instructionSetPointer += args[1].toInt()
+                    }
                 }
             }
         }
     }
+}
 
 
-    println("the value in register a is " + registers.get("a"))
+
+//9227737
+fun main(args: Array<String>) {
+    val instructionSet: List<String> = File(".\\resources\\day12.data").readLines()
+    val baInterpreter = BAInterpreter(instructionSet)
+    baInterpreter.registers.put("c",1)
+
+    baInterpreter.exec()
+    println("the value in register a is " + baInterpreter.registers.get("a"))
 
 }
