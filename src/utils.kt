@@ -71,3 +71,29 @@ class Stack<T>() {
         return rtn
     }
 }
+
+class Flyweight<T>() {
+
+    private var cache: MutableSet<T> = mutableSetOf()
+
+    fun fetch(item: T) : T {
+//        if (cache.contains(item)) {
+//            return cache.find { it == item }!!
+//        }
+        val b = cache.add(item)
+
+//        return item
+        if (b) {
+            return item
+        }
+        return cache.find { it == item }!!
+
+    }
+
+    fun clear() {
+        cache.clear()
+    }
+
+    fun contains(item: T) = cache.contains(item)
+
+}

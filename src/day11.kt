@@ -1,13 +1,15 @@
 import java.io.File
 import java.util.*
+import kotlin.comparisons.compareBy
 
 
 /**
  * Created by dsteeber on 12/12/2016.
+TODO Still need to complete this
+You come upon a column of four floors that have     companion object {
+val flyWeight = Flyweight<Node>()
+}
 
-You come upon a column of four floors that have been entirely sealed off from the rest of the building except
-for a small dedicated lobby. There are some radiation warnings and a big sign which reads
-"Radioisotope Testing Facility".
 
 According to the project status board, this facility is currently being used to experiment
 with Radioisotope Thermoelectric Generators (RTGs, or simply "generators") that are designed to be paired
@@ -135,255 +137,136 @@ Each elevator stop counts as one step, even if nothing is added to or removed fr
 In your situation, what is the minimum number of steps required to bring all of the objects to the fourth floor?
  */
 
-enum class ItemType {
-    Generator,
-    Microchip
-
-}
-
-class Item(val name: String, val ordinalValue: Int, val type: ItemType) {
-    var attachedTo: Item? = null
-
-
-    fun attach(item: Item) {
-        if (attachedTo === item) {
-            return
-        }
-
-        if ((item.name != name) || (item.type != this.type)) {
-            return
-        }
-
-        attachedTo = item
-        item.attach(this)
-    }
-
-    fun detach() {
-        if (attachedTo == null) {
-            return
-        }
-
-        val tmp = attachedTo!!
-        attachedTo = null
-        tmp.detach()
-
-    }
-
-    inline fun isAttached(): Boolean =  (attachedTo != null)
-
-}
-
-
-open class ItemContainer {
-    val items: LinkedList<Item?> = LinkedList<Item?>()
-
-    fun placeItem(item: Item?) {
-        if (item == null) {
-            return
-        }
-        while (items.size < item.ordinalValue) {
-            items.addLast(null)
-        }
-        items[item.ordinalValue] = item
-
-        connectEachItem(item)
-    }
-
-    fun getItem(inx: Int): Item? {
-        if ((inx < 0) || (inx >= items.size)) {
-            return null
-        }
-
-        val rtnItem = items[inx]
-        if (rtnItem != null) {
-            items[inx] == null
-            rtnItem.detach()
-        }
-
-        return items[inx]
-    }
-
-    fun getItemCount(): Int {
-        return items.filter{ it != null}.count()
-    }
-
-    open fun canPlaceItem(): Boolean = true
-
-    private fun connectEachItem(item: Item?) {
-        if (item == null) {
-            return
-        }
-
-        items.filter{ it != null}.map{ it!!.attach(item)}
-    }
-
-    fun connectItems() {
-        items.filter{ it != null }.map{ connectEachItem(it)}
-    }
-
-    fun didAnyChipsFry(): Boolean {
-        println("TODO Implement didAnyChipsFry")
-        return false
+data class BuildingItem(val id: Int, val name: String, val itemType: BuildingItem.ItemType) {
+    enum class ItemType {
+        GENERATOR,
+        MICROCHIP
     }
 }
-
-
-
-
-class Floor(val num: Int) : ItemContainer() {
-
-    fun getState(): String {
-        var itemsStr = ""
-        if (items.size > 0) {
-            itemsStr = items.filter { it != null }.map { it!!.ordinalValue.toString() }.reduce { total, part -> total + "," + part }
-        }
-        return "Floor[${num}]:{${itemsStr}}"
-    }
-
-    override fun toString(): String {
-        var itemsStr = ""
-        if (items.size > 0) {
-            itemsStr = items.filter { it != null }.map { it.toString() }.reduce { total, part -> total + "," + part }
-        }
-        return "Floor[${num}]:{${itemsStr}}"
-    }
-}
-
-inline fun Array<Floor>.getState(): String  = map{ it.getState() }.reduce { total, item -> total + "|" + item }
-inline fun Array<Floor>.getItemCount() = map{ it.getItemCount()}.reduce{ total, cnt -> total + cnt}
-
-
-class Elevator(val floors: Array<Floor>, var currentFloorNum: Int = 0): ItemContainer() {
-
-
-    enum class ElevatorDirection(val value: Int) {
-        UP(1),
-        DOWN(2)
-    }
-
-    inline fun getCurrentFloor() = floors[currentFloorNum]
-
-    override fun canPlaceItem(): Boolean  = (items.size < 2)
-
-    fun moveUp() {
-        if (currentFloorNum < floors.size-1) {
-            currentFloorNum++
-        }
-    }
-
-    fun moveDown() {
-        if (currentFloorNum > 0) {
-            currentFloorNum--
-        }
-    }
-
-    fun canMove(): Boolean {
-        return items.size > 0
-    }
-
-}
-
-
-
-class Me(val elevator: Elevator, val endState: String) {
-    var moves = Stack<String>()
-    var states = HashSet<String>()
-
-    val totaltemCount = elevator.getItemCount() // + elevator.floors.getItemCount()
-
 
 /*
-    private fun saveState(): Boolean {
-        return states.add(elevator.floors.getState())
-    }
-*/
-    /*
-    grab two items, see if anything fries.
-     */
-    fun executeMove() {
-
-        val currentFloor = elevator.getCurrentFloor()
-
-        for (firstItemInx in 0..totaltemCount) {
-            elevator.placeItem(currentFloor.getItem(firstItemInx))
-            for (secondItemInx in 0..totaltemCount) {
-                elevator.placeItem(currentFloor.getItem(secondItemInx))
-                if (elevator.canMove()) {
-                    if (currentFloor.didAnyChipsFry() || elevator.didAnyChipsFry()) {
-
-                    }
-
-                }
-            }
-        }
-    }
-
-}
-
-fun initializeFloors(filePath: String): Array<Floor> {
-    val floors = arrayOf(Floor(1), Floor(2), Floor(3), Floor(4))
-    val lines = File(filePath).readLines()
-    var floor = floors[0]
-    var itemOrdinalValue = 0;
-
-
-    for (line in lines) {
-        var words = line.split(" ", ".", ",").filter{ ! it.isEmpty() }
-
-        for (inx in 0..words.size-1) {
-            val word = words[inx]
-            when (words[inx]) {
-                "floor" -> {
-                    floor = when(words[inx-1]) {
-                        "first" -> {
-                            floors[0]
-                        }
-                        "second" -> {
-                            floors[1]
-                        }
-                        "third" -> {
-                            floors[2]
-                        }
-                        "fourth" -> {
-                            floors[3]
-                        }
-                        else -> {
-                            floors[0]
-                        }
-                    }
-                }
-                "generator" -> {
-                    floor.placeItem(Item(words[inx-1], itemOrdinalValue, ItemType.Generator))
-                    itemOrdinalValue++
-                }
-                "microchip" -> {
-                    floor.placeItem(Item(words[inx-1].split('-')[0], itemOrdinalValue, ItemType.Microchip))
-                    itemOrdinalValue++
-                }
-            }
-        }
-
-    }
-    return floors
-}
-
-
-
-/*
-Algorithm: keep shuffling the components around until all are at the top floor.
-If an any time, you return to a state that you previously had, then stop and back track
+create a breadth first search with paring.  Need to determine if a state has been reached before, and if so, ignore the path
  */
 
+
+//TODO:  Removing the buildingItem.copy as I these are immutable and should not really need another instantation
+fun SortedSet<BuildingItem>.copy() = setOf<BuildingItem>().toSortedSet(compareBy { it.id }).let { copy ->
+    forEachIndexed { i, buildingItem -> copy.add(buildingItem) }
+    copy
+}
+
+
+fun Array<SortedSet<BuildingItem>>.copy() = Array(size) { get(it).copy() }
+
+fun SortedSet<BuildingItem>.toStateString() = map { it.id }.fold(""){ total, b -> "$total $b".trim()}
+fun Array<SortedSet<BuildingItem>>.toStateString() = map { it.toStateString() }.fold("") { total ,b -> "$total [$b]".trim()}
+
+class Building(val floors: Array<SortedSet<BuildingItem>>, val elevator: SortedSet<BuildingItem>) {
+
+    fun getState(currentFloors: List<SortedSet<BuildingItem>>, elevatorFloor: Int = 0): String {
+        // need to sort the floors
+        return "{ elevator: $elevatorFloor, currentFloors: $currentFloors }"
+    }
+
+    fun countMoves(endState: String): Int {
+        var map: MutableMap<String, Int> = mutableMapOf()
+
+        return 0
+    }
+}
+
+
+fun createFloors(initialState: Boolean = true, test: Boolean = false): Array<SortedSet<BuildingItem>> {
+    val rtn =
+    if (initialState) {
+        if (test) {
+            arrayOf(
+                    mutableSetOf(
+                            BuildingItem(1, "H", BuildingItem.ItemType.MICROCHIP),
+                            BuildingItem(2,"L", BuildingItem.ItemType.MICROCHIP)
+                    ).toSortedSet(compareBy { it.id }),
+                    mutableSetOf(
+                            BuildingItem(3,"H", BuildingItem.ItemType.GENERATOR)
+                    ).toSortedSet(compareBy { it.id }),
+                    mutableSetOf(
+                            BuildingItem(4,"L", BuildingItem.ItemType.GENERATOR)
+                    ).toSortedSet(compareBy { it.id }),
+                    mutableSetOf<BuildingItem>().toSortedSet(compareBy { it.id })
+            )
+        } else {
+            arrayOf(
+                    mutableSetOf(
+                            BuildingItem(1, "polonium", BuildingItem.ItemType.GENERATOR),
+                            BuildingItem(2, "thulium", BuildingItem.ItemType.MICROCHIP),
+                            BuildingItem(3,"promethium", BuildingItem.ItemType.GENERATOR),
+                            BuildingItem(4,"ruthenium", BuildingItem.ItemType.GENERATOR),
+                            BuildingItem(5,"cobolt", BuildingItem.ItemType.GENERATOR),
+                            BuildingItem(6,"cobolt", BuildingItem.ItemType.MICROCHIP)
+                    ).toSortedSet(compareBy { it.id }),
+                    mutableSetOf(
+                            BuildingItem(8,"polonium", BuildingItem.ItemType.MICROCHIP),
+                            BuildingItem(7,"promethium", BuildingItem.ItemType.MICROCHIP)
+                    ).toSortedSet(compareBy { it.id }),
+                    mutableSetOf<BuildingItem>().toSortedSet(compareBy { it.id }),
+                    mutableSetOf<BuildingItem>().toSortedSet(compareBy { it.id })
+            )
+        }
+    } else {
+        if (test) {
+            arrayOf(
+                    mutableSetOf<BuildingItem>().toSortedSet(compareBy { it.id }),
+                    mutableSetOf<BuildingItem>().toSortedSet(compareBy { it.id }),
+                    mutableSetOf<BuildingItem>().toSortedSet(compareBy { it.id }),
+                    mutableSetOf(
+                            BuildingItem(1, "H", BuildingItem.ItemType.MICROCHIP),
+                            BuildingItem(2,"L", BuildingItem.ItemType.MICROCHIP),
+                            BuildingItem(3,"H", BuildingItem.ItemType.GENERATOR),
+                            BuildingItem(4,"L", BuildingItem.ItemType.GENERATOR)
+                    ).toSortedSet(compareBy { it.id })
+            )
+
+        } else {
+            arrayOf(
+                    mutableSetOf<BuildingItem>().toSortedSet(compareBy { it.id }),
+                    mutableSetOf<BuildingItem>().toSortedSet(compareBy { it.id }),
+                    mutableSetOf<BuildingItem>().toSortedSet(compareBy { it.id }),
+                    mutableSetOf(
+                            BuildingItem(1, "polonium", BuildingItem.ItemType.GENERATOR),
+                            BuildingItem(2, "thulium", BuildingItem.ItemType.MICROCHIP),
+                            BuildingItem(3,"promethium", BuildingItem.ItemType.GENERATOR),
+                            BuildingItem(4,"ruthenium", BuildingItem.ItemType.GENERATOR),
+                            BuildingItem(5,"cobolt", BuildingItem.ItemType.GENERATOR),
+                            BuildingItem(6,"cobolt", BuildingItem.ItemType.MICROCHIP),
+                            BuildingItem(7,"polonium", BuildingItem.ItemType.MICROCHIP),
+                            BuildingItem(8,"promethium", BuildingItem.ItemType.MICROCHIP))
+                            .toSortedSet(compareBy { it.id })
+            )
+        }
+    }
+    return rtn
+}
+
 fun main(args: Array<String>) {
+    println("day11")
+    val start = System.currentTimeMillis()
 
-    val floors = initializeFloors(".\\resources\\day11.data")
-    val elevator = Elevator(floors,0)
+    val floors = createFloors(initialState = true, test = true)
+    val elevator = sortedSetOf<BuildingItem>().toSortedSet(compareBy { it.id })
 
-    var endState = "Floor[4]:{0,1,2,3,4,5,6,7,8,9}"
+    val building = Building(floors, elevator)
 
-    val me = Me(elevator, endState)
+    val endState = createFloors(initialState = false, test = true).toStateString()
+    val count = building.countMoves(endState)
 
-    println(elevator.floors.getState())
 
+    val floor2 = floors.copy()
 
+    println("current state")
+    println(floors.toStateString())
+    println("desired state")
+    println(endState)
+    println("took $count moves")
+
+    val end = System.currentTimeMillis()
+    println("run time: ${end - start}ms")
 }
